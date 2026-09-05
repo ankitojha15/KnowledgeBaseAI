@@ -19,7 +19,8 @@ DENSE_MODEL = "all-MiniLM-L6-v2"
 # Rerank model = picks best answer
 RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 # LLM model = writes final answer (Groq is free)
-LLM_MODEL = "llama-3.3-70b-versatile"
+# Old llama-3.3 was shut down Aug 2026, new one is gpt-oss
+LLM_MODEL = "openai/gpt-oss-120b"
 
 # --- Search settings ---
 TOP_K = 5  # how many pieces to pick for final answer

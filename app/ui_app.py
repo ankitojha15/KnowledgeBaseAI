@@ -3,9 +3,17 @@
 
 import streamlit as st
 import os
+import time
 from app import config
 from app.indexing import build_all
 from app.generation import answer_question
+
+
+def stream_words(text):
+    # Fake streaming: give one word at a time, like typing.
+    for w in text.split():
+        yield w + " "
+        time.sleep(0.02)
 
 # Look
 st.set_page_config(page_title="KnowledgeBaseAI", page_icon="📚", layout="wide")
@@ -22,6 +30,7 @@ with st.sidebar:
             with open(path, "wb") as out:
                 out.write(f.getbuffer())
         st.success(f"Saved {len(files)} PDF(s).")
+        st.warning("👉 Next step: click 🔨 Build Index below! You must do this.")
     st.write("**2. Build Index**")
     if st.button("🔨 Build Index", use_container_width=True):
         with st.spinner("Reading..."):
@@ -42,7 +51,7 @@ for chat in st.session_state.chats:
     with st.chat_message("user"):
         st.write(chat["q"])
     with st.chat_message("assistant"):
-        st.write(chat["a"])
+        st.write_stream(stream_words(chat["a"]))
         if chat["cites"]:
             st.caption("📄 " + ", ".join([f"Page {c['page']} ({c['source']})" for c in chat["cites"]]))
 
@@ -54,7 +63,7 @@ if q:
     with st.spinner("Thinking..."):
         out = answer_question(q)
     with st.chat_message("assistant"):
-        st.write(out["answer"])
+        st.write_stream(stream_words(out["answer"]))
         if out.get("citations"):
             st.caption("📄 " + ", ".join([f"Page {c['page']} ({c['source']})" for c in out["citations"]]))
         if out.get("no_answer"):

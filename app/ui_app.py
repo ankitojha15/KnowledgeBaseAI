@@ -46,12 +46,12 @@ st.header("💬 Ask your PDFs")
 if "chats" not in st.session_state:
     st.session_state.chats = []
 
-# Show old chats first
+# Show old chats first (no streaming here, just plain text)
 for chat in st.session_state.chats:
     with st.chat_message("user"):
         st.write(chat["q"])
     with st.chat_message("assistant"):
-        st.write_stream(stream_words(chat["a"]))
+        st.write(chat["a"])
         if chat["cites"]:
             st.caption("📄 " + ", ".join([f"Page {c['page']} ({c['source']})" for c in chat["cites"]]))
 

@@ -3,7 +3,11 @@
 
 import streamlit as st
 import os
+import sys
 import time
+
+# Make "app" work both locally and on Streamlit Cloud
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from app import config
 from app.indexing import build_all
 from app.generation import answer_question

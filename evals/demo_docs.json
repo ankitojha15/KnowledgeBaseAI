@@ -1,0 +1,12 @@
+[
+  {"text": "Cats like milk. Cats drink milk every day.", "page": 1, "source": "demo.pdf"},
+  {"text": "Dogs like bones. Dogs chew bones happily.", "page": 2, "source": "demo.pdf"},
+  {"text": "Birds fly in the sky. Birds have wings.", "page": 3, "source": "demo.pdf"},
+  {"text": "Fish swim in water. Fish live in the sea.", "page": 4, "source": "demo.pdf"},
+  {"text": "Lions roar loudly. Lions are kings.", "page": 5, "source": "demo.pdf"},
+  {"text": "Bees make honey. Bees live in hives.", "page": 6, "source": "demo.pdf"},
+  {"text": "Cows give milk. Cows eat grass.", "page": 7, "source": "demo.pdf"},
+  {"text": "Monkeys like bananas. Monkeys climb trees.", "page": 8, "source": "demo.pdf"},
+  {"text": "Frogs jump high. Frogs live near ponds.", "page": 9, "source": "demo.pdf"},
+  {"text": "Owls see at night. Owls are wise birds.", "page": 10, "source": "demo.pdf"}
+]

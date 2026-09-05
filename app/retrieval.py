@@ -54,13 +54,18 @@ def rrf_mix(dense_docs, bm25_docs):
     return mixed
 
 
+_checker = None  # keep model in memory so we load only once
+
+
 def rerank(query, docs, top_k=5):
     # Ask cross-encoder: how well does each doc match query?
-    checker = HuggingFaceCrossEncoder(model_name=config.RERANK_MODEL)
+    global _checker
+    if _checker is None:
+        _checker = HuggingFaceCrossEncoder(model_name=config.RERANK_MODEL)
     pairs = []
     for d in docs:
         pairs.append((query, d.page_content))
-    marks = checker.score(pairs)
+    marks = _checker.score(pairs)
 
     # Join docs with marks and sort
     together = []

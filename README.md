@@ -1,3 +1,12 @@
+---
+title: KnowledgeBaseAI
+emoji: 📚
+sdk: streamlit
+sdk_version: 1.63.0
+app_file: app/ui_app.py
+pinned: false
+---
+
 # KnowledgeBaseAI - Ask questions to your PDFs
 
 A very simple project using ONLY LangChain. You give PDFs, you ask questions, it gives answers with page numbers.

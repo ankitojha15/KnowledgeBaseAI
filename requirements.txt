@@ -5,6 +5,9 @@ pymupdf
 sentence-transformers
 faiss-cpu
 rank-bm25
+langchain
+langchain-community
+langchain-text-splitters
 langchain-groq
 python-dotenv
 pydantic

@@ -40,13 +40,8 @@ with st.sidebar:
             path = os.path.join(config.PDF_FOLDER, f.name)
             with open(path, "wb") as out:
                 out.write(f.getbuffer())
-        st.success(f"Saved {len(files)} PDF(s). Old PDFs removed.")
+        st.success(f"Saved {len(files)} PDF(s).")
         st.warning("👉 Next step: click 🔨 Build Index below! You must do this after every upload.")
-    # Show what PDFs are used now
-    os.makedirs(config.PDF_FOLDER, exist_ok=True)
-    have = [f for f in os.listdir(config.PDF_FOLDER) if f.endswith(".pdf")]
-    if have:
-        st.caption(f"📁 Library now ({len(have)}): " + ", ".join(have))
     st.write("**2. Build Index**")
     if st.button("🔨 Build Index", use_container_width=True):
         with st.spinner("Reading..."):
@@ -55,14 +50,7 @@ with st.sidebar:
         if not childs:
             st.error("No text found in this PDF. It may be scanned images. Try a text PDF.")
         else:
-            import json
-            try:
-                with open(os.path.join(config.PROCESSED_FOLDER, "chunks.json")) as f:
-                    rows = json.load(f)
-                names = sorted(set([r["source"] for r in rows]))
-                st.success(f"Ready! {len(parents)} big + {len(childs)} small from: " + ", ".join(names))
-            except Exception:
-                st.success("Ready! Old chats cleared. Ask on the right.")
+            st.success("Ready! Old PDF removed. Working on new PDF only. Ask on the right.")
     st.divider()
     st.caption("Answers always show [Page X].")
 

@@ -1,33 +1,12 @@
-# API
+# Simple list - only what we need
 fastapi
-uvicorn[standard]
-
-# PDF
+uvicorn
 pymupdf
-
-# RAG / LLM
-langchain
-langchain-community
-langchain-groq
-
-# Embeddings
 sentence-transformers
-
-# Vector search
 faiss-cpu
-
-# Sparse retrieval
 rank-bm25
-
-# Reranking
-sentence-transformers
-
-# Data / validation
-pydantic
+langchain-groq
 python-dotenv
-
-# Evaluation
-scikit-learn
-
-# UI
+pydantic
 streamlit
+scikit-learn

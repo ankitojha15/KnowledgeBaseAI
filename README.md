@@ -9,6 +9,8 @@ pinned: false
 
 # KnowledgeBaseAI - Ask questions to your PDFs
 
+Live demo: https://knowledgebaseai-pzi7.streamlit.app/
+
 A very simple project using ONLY LangChain. You give PDFs, you ask questions, it gives answers with page numbers.
 
 ## How it works (in simple words)
@@ -21,13 +23,14 @@ A very simple project using ONLY LangChain. You give PDFs, you ask questions, it
 
 ## Run it (3 steps)
 
-1. Put PDFs in `data/pdfs/`, add keys to `.env` (copy from `.env.example`):
-   - `GROQ_API_KEY` for answers
+1. Put PDFs in `data/pdfs/` or use Upload button in UI. Add keys to `.env` (copy from `.env.example`):
+   - `GROQ_API_KEY` for answers (model: `openai/gpt-oss-120b`)
    - `HUGGINGFACE_API_KEY` for embeddings (optional, model is public)
-2. Build: `python -m app.indexing`
+2. Build: `./aienv/bin/python -m app.indexing`
 3. Ask:
-   - API: `uvicorn app.main_api:app --reload` -> POST `/ask` with `{"question": "..."}`
-   - UI: `streamlit run app/ui_app.py`
+   - UI local: `./aienv/bin/python -m streamlit run app/ui_app.py`
+   - UI live: https://knowledgebaseai-pzi7.streamlit.app/
+   - API: `./aienv/bin/python -m uvicorn app.main_api:app --reload` -> POST `/ask` with `{"question": "..."}`
 
 ## Test it
 
@@ -53,4 +56,4 @@ A very simple project using ONLY LangChain. You give PDFs, you ask questions, it
 
 ## Resume line (copy this)
 
-Built KnowledgeBaseAI, a LangChain RAG system that answers PDF questions with page-level citations. Used parent-child chunking, hybrid dense (FAISS) + BM25 retrieval with RRF and cross-encoder reranking, Groq LLM with query rewriting and citation verification. Added 60-case eval (Hit/MRR/NDCG), FastAPI + Streamlit, tested end-to-end.
+Built KnowledgeBaseAI, a LangChain RAG system that answers PDF questions with page-level citations. Used parent-child chunking, hybrid dense (FAISS) + BM25 retrieval with RRF and cross-encoder reranking, Groq (openai/gpt-oss-120b) with query rewriting and citation verification. Added 60-case eval (Hit/MRR/NDCG), FastAPI + Streamlit chat UI with streaming, tested end-to-end. Live: https://knowledgebaseai-pzi7.streamlit.app/

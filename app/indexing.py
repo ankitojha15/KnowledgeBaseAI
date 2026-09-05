@@ -46,11 +46,22 @@ def build_bm25(child_docs):
 
 def build_all():
     # Full job: cut text, then make both indexes.
+    # If new PDF has 0 pages, wipe old index so we never answer from old PDF.
+    import shutil
     from app.chunking import chunk_and_save
 
     parents, childs = chunk_and_save()
     if len(childs) == 0:
         print("No chunks. Add PDFs first.")
+        for p in [os.path.join(config.INDEX_FOLDER, "faiss"),
+                  os.path.join(config.INDEX_FOLDER, "bm25.pkl")]:
+            try:
+                if os.path.isdir(p):
+                    shutil.rmtree(p)
+                elif os.path.isfile(p):
+                    os.remove(p)
+            except Exception:
+                pass
         return None, None
 
     dense = build_dense(childs)

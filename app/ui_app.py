@@ -34,12 +34,32 @@ with st.sidebar:
             with open(path, "wb") as out:
                 out.write(f.getbuffer())
         st.success(f"Saved {len(files)} PDF(s).")
-        st.warning("👉 Next step: click 🔨 Build Index below! You must do this.")
+        st.warning("👉 Next step: click 🔨 Build Index below! You must do this after every upload.")
+    # Show what PDFs are used now (old + new mix)
+    os.makedirs(config.PDF_FOLDER, exist_ok=True)
+    have = [f for f in os.listdir(config.PDF_FOLDER) if f.endswith(".pdf")]
+    if have:
+        st.caption(f"📁 Library now ({len(have)}): " + ", ".join(have))
+        st.caption("Build uses ALL of these. Clear for new PDF alone.")
+    if st.button("🗑️ Clear all PDFs", use_container_width=True):
+        import shutil
+        for d in [config.PDF_FOLDER, config.INDEX_FOLDER, config.PROCESSED_FOLDER]:
+            os.makedirs(d, exist_ok=True)
+            for f in os.listdir(d):
+                p = os.path.join(d, f)
+                try:
+                    if os.path.isfile(p):
+                        os.remove(p)
+                except Exception:
+                    pass
+        st.session_state.chats = []
+        st.success("Cleared! Upload new PDF, then Build.")
     st.write("**2. Build Index**")
     if st.button("🔨 Build Index", use_container_width=True):
         with st.spinner("Reading..."):
             build_all()
-        st.success("Ready! Ask on the right.")
+        st.session_state.chats = []
+        st.success("Ready! Old chats cleared. Ask on the right.")
     st.divider()
     st.caption("Answers always show [Page X].")
 

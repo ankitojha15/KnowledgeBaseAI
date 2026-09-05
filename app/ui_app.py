@@ -1,4 +1,4 @@
-# Simple nice screen using Streamlit + LangChain.
+# Pretty chat screen using Streamlit + LangChain.
 # Run with: ./aienv/bin/python -m streamlit run app/ui_app.py
 
 import streamlit as st
@@ -7,49 +7,57 @@ from app import config
 from app.indexing import build_all
 from app.generation import answer_question
 
-# Page look
-st.set_page_config(page_title="KnowledgeBaseAI", page_icon="📚", layout="centered")
-st.title("📚 KnowledgeBaseAI")
-st.caption("Ask questions to your PDFs. Answers come with page numbers.")
+# Look
+st.set_page_config(page_title="KnowledgeBaseAI", page_icon="📚", layout="wide")
 
-# Steps at the start
-c1, c2, c3 = st.columns(3)
-c1.info("**1. Upload**\nPDFs below")
-c2.info("**2. Build**\nClick Build Index")
-c3.info("**3. Ask**\nType + Ask")
-st.divider()
+# Left side: steps (stays still)
+with st.sidebar:
+    st.title("📚 KnowledgeBaseAI")
+    st.write("**1. Upload PDFs**")
+    files = st.file_uploader("Choose PDFs", type=["pdf"], accept_multiple_files=True)
+    if files:
+        os.makedirs(config.PDF_FOLDER, exist_ok=True)
+        for f in files:
+            path = os.path.join(config.PDF_FOLDER, f.name)
+            with open(path, "wb") as out:
+                out.write(f.getbuffer())
+        st.success(f"Saved {len(files)} PDF(s).")
+    st.write("**2. Build Index**")
+    if st.button("🔨 Build Index", use_container_width=True):
+        with st.spinner("Reading..."):
+            build_all()
+        st.success("Ready! Ask on the right.")
+    st.divider()
+    st.caption("Answers always show [Page X].")
 
-# 1. Upload
-st.subheader("1. Upload PDFs")
-files = st.file_uploader("Choose PDFs", type=["pdf"], accept_multiple_files=True)
-if files:
-    os.makedirs(config.PDF_FOLDER, exist_ok=True)
-    for f in files:
-        path = os.path.join(config.PDF_FOLDER, f.name)
-        with open(path, "wb") as out:
-            out.write(f.getbuffer())
-    st.success(f"Saved {len(files)} PDF(s).")
+# Right side: chat (ask box always at bottom)
+st.header("💬 Ask your PDFs")
 
-# 2. Build
-st.subheader("2. Build Index")
-if st.button("🔨 Build Index", use_container_width=True):
-    with st.spinner("Reading PDFs..."):
-        build_all()
-    st.success("Index done! Now ask below.")
+# Remember old chats
+if "chats" not in st.session_state:
+    st.session_state.chats = []
 
-st.divider()
+# Show old chats first
+for chat in st.session_state.chats:
+    with st.chat_message("user"):
+        st.write(chat["q"])
+    with st.chat_message("assistant"):
+        st.write(chat["a"])
+        if chat["cites"]:
+            st.caption("📄 " + ", ".join([f"Page {c['page']} ({c['source']})" for c in chat["cites"]]))
 
-# 3. Ask
-st.subheader("3. Ask a question")
-q = st.text_input("Your question:", placeholder="Example: What is this PDF about?")
-if st.button("✨ Ask", use_container_width=True) and q:
+# Ask box at the very bottom (always below answers)
+q = st.chat_input("Type your question here...")
+if q:
+    with st.chat_message("user"):
+        st.write(q)
     with st.spinner("Thinking..."):
         out = answer_question(q)
-    st.subheader("Answer")
-    st.success(out["answer"])
-    if out.get("citations"):
-        with st.expander("📄 Pages used"):
-            for c in out["citations"]:
-                st.write(f"- Page {c['page']} from {c['source']}")
-    if out.get("no_answer"):
-        st.warning("No answer found in PDFs.")
+    with st.chat_message("assistant"):
+        st.write(out["answer"])
+        if out.get("citations"):
+            st.caption("📄 " + ", ".join([f"Page {c['page']} ({c['source']})" for c in out["citations"]]))
+        if out.get("no_answer"):
+            st.warning("No answer in PDFs.")
+    # Save so it stays on screen, next ask box comes below
+    st.session_state.chats.append({"q": q, "a": out["answer"], "cites": out.get("citations", [])})

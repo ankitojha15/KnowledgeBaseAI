@@ -1,0 +1,33 @@
+# API
+fastapi
+uvicorn[standard]
+
+# PDF
+pymupdf
+
+# RAG / LLM
+langchain
+langchain-community
+langchain-groq
+
+# Embeddings
+sentence-transformers
+
+# Vector search
+faiss-cpu
+
+# Sparse retrieval
+rank-bm25
+
+# Reranking
+sentence-transformers
+
+# Data / validation
+pydantic
+python-dotenv
+
+# Evaluation
+scikit-learn
+
+# UI
+streamlit

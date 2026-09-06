@@ -32,14 +32,6 @@ A very simple project using ONLY LangChain. You give PDFs, you ask questions, it
    - UI live: https://knowledgebaseai-pzi7.streamlit.app/
    - API: `./aienv/bin/python -m uvicorn app.main_api:app --reload` -> POST `/ask` with `{"question": "..."}`
 
-## Test it
-
-- Eval: `python -m evals.run_eval` -> Hit@5, MRR, NDCG, no-answer score (60 cases, demo book)
-- All tests: `python -m tests.test_all` -> checks config, chunking, search, answer, API
-
-## Scores (demo book, 50 normal + 10 adversarial)
-
-- Hit@5: 1.00, MRR: 1.00, NDCG: 1.00, No-answer: 10/10
 
 ## Files (all very simple)
 
@@ -54,6 +46,4 @@ A very simple project using ONLY LangChain. You give PDFs, you ask questions, it
 - `evals/golden.json` - 60 test questions
 - `tests/test_all.py` - end-to-end test
 
-## Resume line (copy this)
 
-Built KnowledgeBaseAI, a LangChain RAG system that answers PDF questions with page-level citations. Used parent-child chunking, hybrid dense (FAISS) + BM25 retrieval with RRF and cross-encoder reranking, Groq (openai/gpt-oss-120b) with query rewriting and citation verification. Added 60-case eval (Hit/MRR/NDCG), FastAPI + Streamlit chat UI with streaming, tested end-to-end. Live: https://knowledgebaseai-pzi7.streamlit.app/

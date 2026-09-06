@@ -10,7 +10,7 @@ from langchain_core.documents import Document
 from langchain_community.retrievers import BM25Retriever
 from langchain_community.vectorstores import FAISS
 from app.indexing import get_embedding_model
-from app.retrieval import rrf_mix, rerank
+from app.retrieval import hybrid_search, rerank
 
 
 def load_demo_docs():
@@ -74,9 +74,7 @@ def run_eval():
             continue
 
         normal_n = normal_n + 1
-        d_hits = dense_shop.similarity_search(q, k=10)
-        b_hits = bm25_tool.invoke(q)
-        mixed = rrf_mix(d_hits, b_hits)
+        mixed = hybrid_search(q, dense_shop, bm25_tool)
         final = rerank(q, mixed, top_k=5)
 
         rank = find_rank(final, c["page"])

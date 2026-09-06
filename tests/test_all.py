@@ -22,12 +22,19 @@ def test_chunking():
 
 
 def test_search_mix():
-    from app.retrieval import rrf_mix, rerank
-    a = [Document(page_content="Cats like milk", metadata={"chunk_id": "c0", "page": 1, "source": "a"})]
-    b = [Document(page_content="Dogs like bones", metadata={"chunk_id": "c1", "page": 1, "source": "a"})]
-    m = rrf_mix(a, b)
+    from langchain_community.vectorstores import FAISS
+    from langchain_community.retrievers import BM25Retriever
+    from app.indexing import get_embedding_model
+    from app.retrieval import hybrid_search, rerank
+    docs = [
+        Document(page_content="Cats like milk", metadata={"chunk_id": "c0", "page": 1, "source": "a", "parent_id": "p0", "parent_text": "Cats like milk"}),
+        Document(page_content="Dogs like bones", metadata={"chunk_id": "c1", "page": 1, "source": "a", "parent_id": "p0", "parent_text": "Dogs like bones"}),
+    ]
+    shop = FAISS.from_documents(docs, get_embedding_model())
+    tool = BM25Retriever.from_documents(docs)
+    m = hybrid_search("cat", shop, tool)
     assert len(m) == 2
-    r = rerank("cat", a + b, top_k=1)
+    r = rerank("cat", docs, top_k=1)
     assert "Cats" in r[0].page_content
     print("search mix + rerank ok")
 

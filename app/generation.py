@@ -1,14 +1,27 @@
-# Step 6: Write answer using ONLY LangChain.
-# Rewrite question -> search -> build text -> ask LLM -> check pages.
-# Like: fix question, find book pages, then tell answer with page numbers.
+# Step 6: Write answer using LangChain + LangGraph.
+# Graph: fix question -> find pages -> write answer -> check pages.
+# Like a small team passing one paper from hand to hand.
 
 import re
+from typing import TypedDict
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
+from langgraph.graph import StateGraph, END
 from app import config
 
 load_dotenv()
+
+
+class State(TypedDict):
+    # One paper passed between steps.
+    question: str
+    rewrite: str
+    docs: list
+    context: str
+    answer: str
+    citations: list
+    no_answer: bool
 
 
 def get_llm():
@@ -60,45 +73,83 @@ def verify_citations(answer, docs):
     return {"good": good, "bad": bad, "ok": len(bad) == 0}
 
 
-def answer_question(query):
-    # Full job: rewrite -> search -> answer with pages.
+# --- Graph steps (each takes the paper, adds one line) ---
+
+def fix_q(state: State):
+    # Step 1: fix question.
+    return {"rewrite": rewrite_query(state["question"])}
+
+
+def find(state: State):
+    # Step 2: find pages.
     from app.retrieval import search
+    docs = search(state["rewrite"])
+    return {"docs": docs}
 
-    new_q = rewrite_query(query)
-    docs = search(new_q)
 
-    if len(docs) == 0:
-        return {"answer": "I don't know from the PDFs.", "citations": [], "no_answer": True}
-
-    context = build_context(docs)
-
+def write(state: State):
+    # Step 3: write answer from pages.
+    if len(state["docs"]) == 0:
+        return {"answer": "I don't know from the PDFs.", "context": "", "no_answer": True, "citations": []}
+    context = build_context(state["docs"])
     llm = get_llm()
     prompt = ChatPromptTemplate.from_messages([
         ("system", "You answer only from context. Give short answer. Add [Page X] after each fact. If not in context, say: I don't know from the PDFs."),
         ("human", "Question: {q}\n\nContext:\n{ctx}"),
     ])
     chain = prompt | llm
-    out = chain.invoke({"q": query, "ctx": context})
-    answer = out.content.strip()
+    out = chain.invoke({"q": state["question"], "ctx": context})
+    return {"context": context, "answer": out.content.strip()}
 
-    # No-answer check
-    if "I don't know from the PDFs" in answer:
-        return {"answer": answer, "citations": [], "no_answer": True}
 
-    # Collect citations
-    check = verify_citations(answer, docs)
+def check(state: State):
+    # Step 4: check pages + no-answer.
+    if state.get("no_answer"):
+        return {}
+    if "I don't know from the PDFs" in state["answer"]:
+        return {"no_answer": True, "citations": []}
+    ok = verify_citations(state["answer"], state["docs"])
     cites = []
-    for d in docs:
+    for d in state["docs"]:
         cites.append({"page": d.metadata["page"], "source": d.metadata["source"]})
-
-    # Keep only cited pages
     only_good = []
     for c in cites:
-        if str(c["page"]) in check["good"]:
+        if str(c["page"]) in ok["good"]:
             if c not in only_good:
                 only_good.append(c)
+    return {"citations": only_good, "no_answer": False}
 
-    return {"answer": answer, "citations": only_good, "no_answer": False, "rewrite": new_q}
+
+def build_graph():
+    # Join steps into a line: fix -> find -> write -> check -> end.
+    g = StateGraph(State)
+    g.add_node("fix_q", fix_q)
+    g.add_node("find", find)
+    g.add_node("write", write)
+    g.add_node("check", check)
+    g.set_entry_point("fix_q")
+    g.add_edge("fix_q", "find")
+    g.add_edge("find", "write")
+    g.add_edge("write", "check")
+    g.add_edge("check", END)
+    return g.compile()
+
+
+_graph = None
+
+
+def answer_question(query):
+    # Full job through the graph.
+    global _graph
+    if _graph is None:
+        _graph = build_graph()
+    out = _graph.invoke({"question": query})
+    return {
+        "answer": out.get("answer", "I don't know from the PDFs."),
+        "citations": out.get("citations", []),
+        "no_answer": out.get("no_answer", False),
+        "rewrite": out.get("rewrite", query),
+    }
 
 
 # If we run this file, test helper parts (no API call)

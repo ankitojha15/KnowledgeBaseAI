@@ -1,5 +1,5 @@
 # Step 5: Find best pieces using ONLY LangChain.
-# Hybrid = dense (meaning) + BM25 (words). RRF = mix both lists.
+# Hybrid = EnsembleRetriever mixes dense (meaning) + BM25 (words) with RRF.
 # Rerank = ask a smart checker to pick the best.
 # Like asking 2 friends, mixing answers, then picking best.
 
@@ -8,6 +8,7 @@ import pickle
 from dotenv import load_dotenv
 from langchain_community.vectorstores import FAISS
 from langchain_community.cross_encoders import HuggingFaceCrossEncoder
+from langchain_classic.retrievers import EnsembleRetriever
 from app import config
 from app.indexing import get_embedding_model
 
@@ -30,28 +31,12 @@ def load_bm25():
     return tool
 
 
-def rrf_mix(dense_docs, bm25_docs):
-    # Mix 2 lists with RRF. Simple formula: score = 1 / (60 + rank)
-    # Higher score = better.
-    scores = {}  # chunk_id -> score
-    box = {}  # chunk_id -> doc
-
-    for rank, d in enumerate(dense_docs):
-        cid = d.metadata["chunk_id"]
-        scores[cid] = scores.get(cid, 0) + 1 / (60 + rank + 1)
-        box[cid] = d
-
-    for rank, d in enumerate(bm25_docs):
-        cid = d.metadata["chunk_id"]
-        scores[cid] = scores.get(cid, 0) + 1 / (60 + rank + 1)
-        box[cid] = d
-
-    # Sort by score, best first
-    best_ids = sorted(scores, key=lambda x: scores[x], reverse=True)
-    mixed = []
-    for cid in best_ids:
-        mixed.append(box[cid])
-    return mixed
+def hybrid_search(query, dense_shop, bm25_tool):
+    # Mix dense + BM25 with LangChain RRF. c=60 is the RRF magic number.
+    n = config.TOP_K * 2
+    dense_box = dense_shop.as_retriever(search_kwargs={"k": n})
+    team = EnsembleRetriever(retrievers=[dense_box, bm25_tool], weights=[0.5, 0.5], c=60)
+    return team.invoke(query)
 
 
 _checker = None  # keep model in memory so we load only once
@@ -80,15 +65,10 @@ def rerank(query, docs, top_k=5):
 
 
 def search(query):
-    # Full search: hybrid + RRF + rerank. Returns best docs.
+    # Full search: hybrid (RRF) + rerank. Returns best docs.
     dense_shop = load_dense()
     bm25_tool = load_bm25()
-
-    n = config.TOP_K * 2
-    dense_hits = dense_shop.similarity_search(query, k=n)
-    bm25_hits = bm25_tool.invoke(query)
-
-    mixed = rrf_mix(dense_hits, bm25_hits)
+    mixed = hybrid_search(query, dense_shop, bm25_tool)
     final = rerank(query, mixed, top_k=config.TOP_K)
     return final
 
